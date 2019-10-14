@@ -6,18 +6,27 @@ namespace Moneybox.App.Features
 {
     public class WithdrawMoney
     {
-        private IAccountRepository accountRepository;
-        private INotificationService notificationService;
+        private readonly IAccountRepository _accountRepository;
+        private readonly INotificationService _notificationService;
 
         public WithdrawMoney(IAccountRepository accountRepository, INotificationService notificationService)
         {
-            this.accountRepository = accountRepository;
-            this.notificationService = notificationService;
+            _accountRepository = accountRepository;
+            _notificationService = notificationService;
         }
 
         public void Execute(Guid fromAccountId, decimal amount)
         {
-            // TODO:
+            var from = _accountRepository.GetAccountById(fromAccountId);
+            Account.AccountCheck(from);
+
+            from.Withdraw(amount);
+            if (from.Balance < Account.NotificationLimit)
+            {
+                _notificationService.NotifyFundsLow(from.User.Email);
+            }
+
+            _accountRepository.Update(from);
         }
     }
 }
